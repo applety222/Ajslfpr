@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100%놀이터 - 중국본사 직영 (완전판)</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Malgun Gothic',sans-serif;background:#000;color:#fff;}
+        .header{background:linear-gradient(#c00,#900);padding:20px;text-align:center;font-size:50px;color:#ff0;text-shadow:5px 5px 15px #000;}
+        .notice{background:#111;color:#ff0;padding:14px;text-align:center;font-size:21px;animation:blink 1.4s infinite;}
+        @keyframes blink{50%{opacity:0.5}}
+        .user-info{position:absolute;top:20px;right:20px;background:rgba(0,0,0,0.8);padding:12px 25px;border-radius:50px;border:3px solid #ff0;font-size:19px;}
+        .balance{font-size:42px;background:#000;border:6px solid #ff0;padding:15px 60px;border-radius:50px;margin:20px;display:inline-block;}
+        .btn{padding:18px 50px;margin:15px;background:#ff0;color:#c00;font-weight:bold;border-radius:50px;font-size:26px;cursor:pointer;}
+        .btn:hover{background:#fff;transform:scale(1.05);}
+        .tab-btn{padding:15px 30px;margin:5px;background:#333;color:#ff0;border:2px solid #c00;border-radius:15px;cursor:pointer;}
+        .tab-btn.active{background:#c00;}
+        .popup{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.98);z-index:999;justify-content:center;align-items:center;}
+        .popup-inner{max-width:90%;background:#111;padding:40px;border:7px solid #c00;border-radius:25px;position:relative;overflow-y:auto;max-height:95vh;}
+        .close{color:#ff0;font-size:60px;position:absolute;top:10px;right:20px;cursor:pointer;}
+        input, select{padding:15px;font-size:20px;width:100%;margin:10px 0;background:#222;color:#ff0;border:2px solid #c00;border-radius:10px;}
+        table{width:100%;border-collapse:collapse;margin:20px 0;}
+        th,td{border:1px solid #c00;padding:12px;text-align:center;background:#111;}
+        th{background:#900;color:#ff0;}
+        .game-area{padding:20px;background:#111;border:4px solid #c00;border-radius:20px;margin:20px 0;}
+        .baccarat-table{background:#006400;padding:30px;border-radius:50%;width:90%;max-width:800px;margin:30px auto;position:relative;height:400px;}
+        .card{width:80px;height:120px;background:#fff;color:#000;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:40px;margin:10px;font-weight:bold;box-shadow:0 0 20px #ff0;}
+    </style>
+</head>
+<body>
+
+<div class="header">100%놀이터 중국본사 직영</div>
+<div class="notice">신규가입 10만원 즉시 지급 │ 첫충 30% 매충 15% 루징 8% 무제한</div>
+
+<div id="userInfo" class="user-info" style="display:none;">
+    <span id="welcomeMsg"></span>님 
+    <button class="btn" style="padding:8px 20px;font-size:16px;" onclick="logout()">로그아웃</button>
+    <span id="adminTag" style="color:#0f0;margin-left:10px;display:none;">[관리자]</span>
+</div>
+
+<center>
+    <div class="balance" id="balanceBox" style="display:none;">보유금 : <span id="money">0</span>원</div><br>
+    
+    <div id="guestMenu">
+        <button class="btn" onclick="openPopup('loginPopup')">로그인</button>
+        <button class="btn" onclick="openPopup('registerPopup')">회원가입</button>
+    </div>
+
+    <div id="memberMenu" style="display:none;">
+        <button class="btn" onclick="checkLogin(()=>openPopup('depositPopup'))">충전</button>
+        <button class="btn" onclick="checkLogin(()=>openPopup('withdrawPopup'))">환전</button>
+        <button class="btn" onclick="showTab('sports')">스포츠</button>
+        <button class="btn" onclick="showTab('casino')">카지노</button>
+        <button class="btn" id="adminBtn" style="display:none;" onclick="openPopup('adminPopup');loadAdminPanel()">관리자</button>
+    </div>
+
+    <div id="gameArea" style="display:none;margin-top:30px;width:95%;max-width:1200px;margin:30px auto;">
+        <div id="sportsTab">
+            <h2 style="color:#ff0;margin:20px;">오늘의 핫 매치 (결과 100% 랜덤!)</h2>
+            <div id="matchList"></div>
+        </div>
+
+        <div id="casinoTab" style="display:none;">
+            <h2 style="color:#ff0;">실시간 바카라</h2>
+            <div class="game-area">
+                <div style="text-align:center;margin:20px;">
+                    <button class="tab-btn active" onclick="switchBaccarat('player')">플레이어</button>
+                    <button class="tab-btn" onclick="switchBaccarat('tie')">타이</button>
+                    <button class="tab-btn" onclick="switchBaccarat('banker')">뱅커</button>
+                </div>
+                <div style="text-align:center;">
+                    <input type="number" id="betAmount" placeholder="배팅금액 (최소 1,000원)" min="1000" style="width:300px;display:inline-block;">
+                    <button class="btn" onclick="placeBaccaratBet()" style="padding:15px 40px;">배팅하기</button>
+                </div>
+                <div class="baccarat-table">
+                    <div style="position:absolute;top:20px;left:50%;transform:translateX(-50%);color:#ff0;font-size:30px;">플레이어</div>
+                    <div id="playerCards" style="position:absolute;top:80px;left:50%;transform:translateX(-50%);"></div>
+                    <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:#f00;font-size:30px;">뱅커</div>
+                    <div id="bankerCards" style="position:absolute;bottom:80px;left:50%;transform:translateX(-50%);"></div>
+                </div>
+                <div style="text-align:center;color:#ff0;font-size:24px;margin-top:20px;" id="baccaratResult"></div>
+            </div>
+        </div>
+    </div>
+</center>
+
+<!-- 팝업들 -->
+<div id="loginPopup" class="popup"><div class="popup-inner">
+    <span class="close" onclick="closePopup('loginPopup')">&times;</span>
+    <h2 style="color:#ff0;text-align:center;">로그인</h2>
+    <input type="text" id="loginId" placeholder="아이디"><br>
+    <input type="password" id="loginPw" placeholder="비밀번호"><br>
+    <button class="btn" onclick="login()">로그인</button>
+</div></div>
+
+<div id="registerPopup" class="popup"><div class="popup-inner">
+    <span class="close" onclick="closePopup('registerPopup')">&times;</span>
+    <h2 style="color:#ff0;text-align:center;">회원가입 (신규 10만원 지급)</h2>
+    <input type="text" id="regId" placeholder="아이디 (4~12자 영문숫자)"><br>
+    <input type="text" id="regNick" placeholder="별명"><br>
+    <input type="password" id="regPw" placeholder="비밀번호"><br>
+    <input type="password" id="regPw2" placeholder="비밀번호 확인"><br>
+    <button class="btn" onclick="register()">가입하기</button>
+</div></div>
+
+<div id="depositPopup" class="popup"><div class="popup-inner">
+    <span class="close" onclick="closePopup('depositPopup')">&times;</span>
+    <h2 style="color:#ff0;text-align:center;">충전하기</h2>
+    <p style="color:#ff0;">첫충 30% │ 매충 15%</p>
+    <input type="number" id="depositAmount" placeholder="충전금액 (최소 10,000원)" min="10000"><br>
+    <button class="btn" onclick="deposit()">충전신청</button>
+</div></div>
+
+<div id="withdrawPopup" class="popup"><div class="popup-inner">
+    <span class="close" onclick="closePopup('withdrawPopup')">&times;</span>
+    <h2 style="color:#ff0;text-align:center;">환전신청</h2>
+    <input type="number" id="withdrawAmount" placeholder="환전금액" min="10000"><br>
+    <button class="btn" onclick="withdraw()">환전신청</button>
+</div></div>
+
+<div id="adminPopup" class="popup"><div class="popup-inner">
+    <span class="close" onclick="closePopup('adminPopup')">&times;</span>
+    <h2 style="color:#ff0;text-align:center;">관리자 패널</h2>
+    <div id="adminContent"></div>
+</div></div>
+
+<script>
+// ==================== 전역 변수 ====================
+let users = JSON.parse(localStorage.getItem('users') || '[]');
+let deposits = JSON.parse(localStorage.getItem('deposits') || '[]');
+let withdraws = JSON.parse(localStorage.getItem('withdraws') || '[]');
+let currentUser = localStorage.getItem('currentUser') ? JSON.parse(localStorage.getItem('currentUser')) : null;
+
+// 관리자 계정 자동 생성
+if (!users.some(u => u.id === 'admin')) {
+    users.push({id:'admin', pw:'admin1234', nick:'사장님', balance:999999999, isAdmin:true, join:'2025-01-01'});
+    localStorage.setItem('users', JSON.stringify(users));
+}
+
+// ==================== 기본 함수 ====================
+function openPopup(id) { document.getElementById(id).style.display = 'flex'; }
+function closePopup(id) { document.getElementById(id).style.display = 'none'; }
+function checkLogin(cb) { if(currentUser) cb(); else alert('로그인하세요!'); }
+
+function saveAll() {
+    localStorage.setItem('users', JSON.stringify(users));
+    localStorage.setItem('deposits', JSON.stringify(deposits));
+    localStorage.setItem('withdraws', JSON.stringify(withdraws));
+    if(currentUser) localStorage.setItem('currentUser', JSON.stringify(currentUser));
+}
+
+// ==================== 로그인/회원가입/충환전 ====================
+function login() {
+    const id = document.getElementById('loginId').value.trim();
+    const pw = document.getElementById('loginPw').value;
+    const user = users.find(u => u.id === id && u.pw === pw);
+    if (user) {
+        currentUser = user;
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        updateUI();
+        closePopup('loginPopup');
+        alert(user.nick + '님 환영합니다!');
+    } else alert('아이디 또는 비밀번호 오류');
+}
+
+function logout() {
+    currentUser = null;
+    localStorage.removeItem('currentUser');
+    updateUI();
+    showTab('');
+}
+
+function register() {
+    const id = document.getElementById('regId').value.trim();
+    const nick = document.getElementById('regNick').value.trim();
+    const pw = document.getElementById('regPw').value;
+    const pw2 = document.getElementById('regPw2').value;
+
+    if (!/^[a-zA-Z0-9]{4,12}$/.test(id)) return alert('아이디 4~12자 영문+숫자');
+    if (users.some(u => u.id === id)) return alert('이미 존재하는 아이디');
+    if (!nick || pw.length < 4 || pw !== pw2) return alert('모든 항목을 정확히 입력하세요');
+
+    users.push({id, pw, nick, balance:100000, isAdmin:false, join:new Date().toISOString().slice(0,10)});
+    saveAll();
+    alert('가입 완료! 10만원 지급되었습니다.');
+    closePopup('registerPopup');
+}
+
+function deposit() {
+    const amt = parseInt(document.getElementById('depositAmount').value || 0);
+    if (amt < 10000) return alert('최소 1만원부터 충전 가능');
+    const isFirst = !deposits.some(d => d.id === currentUser.id);
+    const bonusRate = isFirst ? 0.30 : 0.15;
+    const bonus = Math.floor(amt * bonusRate);
+    currentUser.balance += amt + bonus;
+    deposits.push({id:currentUser.id, amount:amt, bonus, date:new Date().toISOString().slice(0,10)});
+    saveAll();
+    alert(`충전 완료! 보너스 ${bonus.toLocaleString()}원 지급 (${isFirst?'첫충 30%':'매충 15%'})`);
+    updateUI();
+    closePopup('depositPopup');
+}
+
+function withdraw() {
+    const amt = parseInt(document.getElementById('withdrawAmount').value || 0);
+    if (amt < 10000 || amt > currentUser.balance) return alert('금액 확인');
+    currentUser.balance -= amt;
+    withdraws.push({id:currentUser.id, amount:amt, date:new Date().toISOString().slice(0,10), status:'대기'});
+    saveAll();
+    alert('환전신청 완료! 5~30분 내 입금됩니다.');
+    updateUI();
+    closePopup('withdrawPopup');
+}
+
+function updateUI() {
+    if (currentUser) {
+        document.getElementById('guestMenu').style.display = 'none';
+        document.getElementById('memberMenu').style.display = 'block';
+        document.getElementById('balanceBox').style.display = 'inline-block';
+        document.getElementById('userInfo').style.display = 'block';
+        document.getElementById('welcomeMsg').textContent = currentUser.nick;
+        document.getElementById('money').textContent = currentUser.balance.toLocaleString();
+        document.getElementById('adminBtn').style.display = currentUser.isAdmin ? 'inline-block' : 'none';
+        document.getElementById('adminTag').style.display = currentUser.isAdmin ? 'inline' : 'none';
+        document.getElementById('gameArea').style.display = 'block';
+    } else {
+        document.getElementById('guestMenu').style.display = 'block';
+        document.getElementById('memberMenu').style.display = 'none';
+        document.getElementById('balanceBox').style.display = 'none';
+        document.getElementById('userInfo').style.display = 'none';
+        document.getElementById('gameArea').style.display = 'none';
+    }
+}
+
+// ==================== 관리자 패널 ====================
+function loadAdminPanel() {
+    if (!currentUser?.isAdmin) return alert('권한 없음');
+    let html = `<h3 style="color:#ff0;margin-bottom:20px;">전체 회원 목록</h3><table><tr><th>아이디</th><th>별명</th><th>잔고</th><th>가입일</th><th>관리</th></tr>`;
+    users.filter(u => !u.isAdmin).forEach(u => {
+        html += `<tr><td>${u.id}</td><td>${u.nick}</td><td>${u.balance.toLocaleString()}원</td><td>${u.join}</td>
+                 <td><button class="btn" style="padding:8px 16px;font-size:16px;" onclick="adminEdit('${u.id}')">수정</button></td></tr>`;
+    });
+    html += `</table>`;
+    document.getElementById('adminContent').innerHTML = html;
+}
+
+function adminEdit(id) {
+    const user = users.find(u => u.id === id);
+    const amt = prompt(`${user.nick}(${user.id})\n현재 잔고: ${user.balance.toLocaleString()}원\n수정할 금액 (음수면 차감)`, "0");
+    if (amt === null) return;
+    const change = parseInt(amt) || 0;
+    user.balance += change;
+    saveAll();
+    alert('잔액 수정 완료');
+    loadAdminPanel();
+}
+
+// ==================== 스포츠 베팅 ====================
+const matches = [
+    {home:"맨체스터 유나이티드", away:"리버풀", time:"04:00", odds:{home:1.95, draw:3.50, away:1.88}},
+    {home:"레알 마드리드", away:"바르셀로나", time:"05:30", odds:{home:1.92, draw:3.70, away:1.90}},
+    {home:"바이에른 뮌헨", away:"도르트문트", time:"03:30", odds:{home:1.85, draw:3.80, away:2.05}},
+    {home:"유벤투스", away:"AC밀란", time:"04:45", odds:{home:1.98, draw:3.40, away:1.93}},
+    {home:"파리 생제르맹", away:"마르세유", time:"06:00", odds:{home:1.75, draw:3.90, away:2.30}},
+];
+
+function showTab(tab) {
+    document.getElementById('sportsTab').style.display = tab==='sports' ? 'block' : 'none';
+    document.getElementById('casinoTab').style.display = tab==='casino' ? 'block' : 'none';
+    if (tab === 'sports') loadMatches();
+}
+
+function loadMatches() {
+    let html = '';
+    matches.forEach((m, i) => {
+        html += `
+        <div class="game-area">
+            <div style="font-size:24px;color:#ff0;">${m.home} vs ${m.away} <span style="color:#aaa;font-size:18px;">${m.time}</span></div>
+            <table style="width:100%;margin-top:10px;">
+                <tr>
+                    <td><button class="btn" onclick="betMatch(${i},'home')" style="background:#0f0;color:#000;width:100%;padding:15px;">승 ${m.odds.home.toFixed(2)}</button></td>
+                    <td><button class="btn" onclick="betMatch(${i},'draw')" style="background:#666;width:100%;padding:15px;">무 ${m.odds.draw.toFixed(2)}</button></td>
+                    <td><button class="btn" onclick="betMatch(${i},'away')" style="background:#f00;width:100%;padding:15px;">패 ${m.odds.away.toFixed(2)}</button></td>
+                </tr>
+            </table>
+        </div>`;
+    });
+    document.getElementById('matchList').innerHTML = html;
+}
+
+function betMatch(idx, type) {
+    checkLogin(() => {
+        const amount = prompt('배팅금액을 입력하세요 (1,000원 단위)', '10000');
+        if (!amount) return;
+        const amt = parseInt(amount);
+        if (isNaN(amt) || amt < 1000) return alert('최소 1,000원');
+        if (amt > currentUser.balance) return alert('잔액 부족');
+
+        const match = matches[idx];
+        const odd = match.odds[type];
+        const potential = Math.floor(amt * odd);
+
+        currentUser.balance -= amt;
+        updateUI();
+
+        setTimeout(() => {
+            const r = Math.random();
+            const result = r < 0.333 ? 'home' : r < 0.666 ? 'draw' : 'away';
+            const isWin = result === type;
+
+            if (isWin) {
+                currentUser.balance += potential;
+                const team = type === 'home' ? match.home : type === 'away' ? match.away : '무승부';
+                alert(`승리!\n${team}\n배팅 ${amt.toLocaleString()}원 → 당첨 ${potential.toLocaleString()}원`);
+            } else {
+                const betTeam = type === 'home' ? match.home : type === 'away' ? match.away : '무승부';
+                const winTeam = result === 'home' ? match.home : result === 'away' ? match.away : '무승부';
+                alert(`패배...\n배팅: ${betTeam}\n결과: ${winTeam}\n-${amt.toLocaleString()}원`);
+            }
+            saveAll();
+            updateUI();
+        }, 2500);
+    });
+}
+
+// ==================== 바카라 ====================
+let currentBaccaratBet = 'player';
+
+function switchBaccarat(type) {
+    currentBaccaratBet = type;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+function placeBaccaratBet() {
+    checkLogin(() => {
+        const amt = parseInt(document.getElementById('betAmount').value || 0);
+        if (amt < 1000 || amt > currentUser.balance) return alert('배팅금액 확인 (최소 1,000원)');
+
+        currentUser.balance -= amt;
+        updateUI();
+        document.getElementById('playerCards').innerHTML = '';
+        document.getElementById('bankerCards').innerHTML = '';
+        document.getElementById('baccaratResult').textContent = '카드 배중...';
+
+        const player = drawHand();
+        const banker = drawHand();
+
+        // 카드 표시
+        player.cards.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.textContent = c;
+            document.getElementById('playerCards').appendChild(div);
+        });
+        banker.cards.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.textContent = c;
+            document.getElementById('bankerCards').appendChild(div);
+        });
+
+        setTimeout(() => {
+            const p = player.val;
+            const b = banker.val;
+            const winner = p > b ? 'player' : p < b ? 'banker' : 'tie';
+
+            let payout = 0;
+            let msg = '';
+            if (currentBaccaratBet === winner) {
+                if (winner === 'tie') payout = amt * 8;
+                else if (winner === 'banker') payout = Math.floor(amt * 1.95);
+                else payout = amt * 2;
+                currentUser.balance += payout;
+                msg = `승리! +${payout.toLocaleString()}원`;
+            } else {
+                msg = `패배 -${amt.toLocaleString()}원`;
+            }
+            document.getElementById('baccaratResult').textContent = `${msg} (플레이어 ${p} : ${b} 뱅커)`;
+            saveAll();
+            updateUI();
+        }, 1800);
+    });
+}
+
+function drawHand() {
+    const ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+    const cards = [];
+    let sum = 0;
+    for (let i = 0; i < 3; i++) {
+        if (i === 2 && sum % 10 >= 6 && cards.length >= 2) break;
+        const card = ranks[Math.floor(Math.random() * ranks.length)];
+        cards.push(card);
+        sum += card === 'A' ? 1 : (isNaN(card) ? 0 : parseInt(card));
+    }
+    return {cards, val: sum % 10};
+}
+
+// ==================== 초기화 ====================
+window.onload = () => {
+    updateUI();
+};
+</script>
+</body>
+</html>
